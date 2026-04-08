@@ -228,13 +228,37 @@ def execute(data: dict, yaml_file: str, execution_override: int = None, force: b
 
         print(f"\n{'='*60}")
 
-        # ── 关闭任务 ──
+        # ── 变更状态 (status 字段直接设置) ──
+        new_status = t.get("status")
+        if new_status and task_id:
+            print(f"  变更任务 ID {task_id} 状态为 {new_status}: {name}")
+            try:
+                client.update_task(task_id, {"status": new_status})
+                print(f"  OK 已变更为 {new_status}")
+                success += 1
+            except Exception as e:
+                print(f"  FAIL: {e}")
+                failed += 1
+            continue
+
+        # ── 关闭任务 (close 字段映射到对应状态) ──
         close_reason = t.get("close")
         if close_reason and task_id:
-            print(f"  关闭任务 ID {task_id}: {name}")
+            status_map = {
+                "done": "closed",
+                "cancel": "cancel",
+                "pause": "pause",
+            }
+            target_status = status_map.get(close_reason, "cancel")
+            print(f"  关闭任务 ID {task_id} ({close_reason} -> {target_status}): {name}")
             try:
-                client.update_task(task_id, {"status": "cancel", "canceledReason": close_reason})
-                print(f"  OK 已关闭")
+                update_data = {"status": target_status}
+                if close_reason == "cancel":
+                    update_data["canceledReason"] = close_reason
+                elif close_reason == "done":
+                    update_data["closedReason"] = "done"
+                client.update_task(task_id, update_data)
+                print(f"  OK 已{close_reason}")
                 success += 1
             except Exception as e:
                 print(f"  FAIL: {e}")

@@ -111,7 +111,8 @@ def zentao_publish_yaml(yaml_content: str, dry_run: bool = False) -> str:
 
     支持字段：
       - id: 有则更新，无则创建
-      - close: 关闭任务（填写关闭原因）
+      - status: 直接变更状态（wait/doing/pause/done/cancel/closed）
+      - close: 关闭任务（done=已完成关闭, cancel=取消, pause=暂停）
       - videos: 视频文件路径列表（附件可在禅道直接下载）
       - images: 图片文件路径列表（嵌入任务描述）
 
